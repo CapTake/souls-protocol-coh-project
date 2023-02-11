@@ -1,0 +1,1 @@
+forge create Splitter --rpc-url=$TESTNET_CANTO_RPC_URL --private-key=$TEST_PRIVATE_KEY --constructor-args [$TESTNET_ADDRESS1] [100]
