@@ -72,6 +72,6 @@ contract IdleHeroesGamePOC is SoulGame, Ownable {
         uint16 cumulative = _agiup + _chaup + _conup + _dexup + _itup + _strup + _wisup;
         require(cumulative <= (hero.up - hero.upSpent), "Upgrade is out of range");
         hero.upSpent += uint8(cumulative);
-        // hero
+        // TODO: coplete method logics
     }
 }

@@ -46,7 +46,7 @@ contract Summoner is ReentrancyGuard, Ownable {
 
     uint256 public epochSize = 100;
 
-    uint256 public bondingFactor = 1 ether;
+    uint256 public bondingFactor = 2 ether;
 
     uint8 public perWalletLimit = 10;
 
@@ -57,6 +57,13 @@ contract Summoner is ReentrancyGuard, Ownable {
      * @param id id of the token minted
      */
     event SoulSummoned(address indexed summoner, uint256 value, uint256 id);
+
+    /**
+     * Event for epoch change logging
+     * @param epoch new epoch
+     * @param price new token price
+     */
+    event EpochChanged(uint256 epoch, uint256 price);
 
     /**
      * @param _price price per summon
@@ -123,6 +130,7 @@ contract Summoner is ReentrancyGuard, Ownable {
         if (_tokenIdCounter.current() % epochSize == 0) {
             epoch.add(1);
             price.add(bondingFactor);
+            emit EpochChanged(epoch, price);
         }
 
         Kokoro memory _soul = Kokoro(_agi, _cha, _con, _dex, _int, _str, _wis, 0);
