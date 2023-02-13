@@ -32,7 +32,7 @@ contract Summoner is ReentrancyGuard, Ownable {
     uint8 private constant MAX_CORE_CUMULATIVE_POINTS = 35;
     uint8 private constant MIN_CORE_TRAIT_POINTS = 2;
     uint8 private constant MAX_CORE_TRAIT_POINTS = 10;
-    uint16 private constant GENESIS_MINT = 4000;
+    uint16 private _genesis_mint = 4000;
 
     mapping(address => uint8) private _minters;
 
@@ -69,12 +69,24 @@ contract Summoner is ReentrancyGuard, Ownable {
      * @param _price price per summon
      * @param _epochSize size of the 'epoch' after each epoch there is a price increase by
      * @param _bondingFactor amount of Canto to add to price
+     * @param _perWalletLimit how many tokens can address mint
+     * @param _mintLimit total supply of genesis mint
      * @param _treasury Address where collected funds will be forwarded to
      * @param _nft Address of the token being sold
      */
-    constructor(uint256 _price, uint256 _epochSize, uint256 _bondingFactor, address payable _treasury, ISouls _nft) {
+    constructor(
+        uint256 _price,
+        uint256 _epochSize,
+        uint256 _bondingFactor,
+        uint8 _perWalletLimit,
+        uint16 _mintLimit,
+        address payable _treasury,
+        ISouls _nft
+    ) {
         require(_price > 0, "Summoner: price is 0");
         require(_epochSize > 0, "Summoner: epoch is 0");
+        require(_perWalletLimit > 0, "Summoner: perWalletLimit is 0");
+        require(_mintLimit > _epochSize, "Summoner: mint limit is too low");
         require(_treasury != address(0), "Summoner: treasury is the zero address");
         require(address(_nft) != address(0), "Summoner: token is the zero address");
 
@@ -83,6 +95,8 @@ contract Summoner is ReentrancyGuard, Ownable {
         price = _price;
         bondingFactor = _bondingFactor;
         epochSize = _epochSize;
+        perWalletLimit = _perWalletLimit;
+        _genesis_mint = _mintLimit;
         treasury = _treasury;
         _token = _nft;
     }
@@ -104,7 +118,7 @@ contract Summoner is ReentrancyGuard, Ownable {
         payable
         nonReentrant
     {
-        require(_tokenIdCounter.current() < GENESIS_MINT, "Summoner: Genesis mint limit reached");
+        require(_tokenIdCounter.current() < _genesis_mint, "Summoner: Genesis mint limit reached");
         if (msg.sender != owner()) {
             uint8 minted = _minters[msg.sender];
             require(msg.value >= price, "Summoner: insufficient funds");
@@ -128,8 +142,8 @@ contract Summoner is ReentrancyGuard, Ownable {
 
         // Encrease the price at the start of new epoch
         if (_tokenIdCounter.current() % epochSize == 0) {
-            epoch.add(1);
-            price.add(bondingFactor);
+            epoch = epoch.add(1);
+            price = price.add(bondingFactor);
             emit EpochChanged(epoch, price);
         }
 
