@@ -32,6 +32,7 @@ contract Summoner is ReentrancyGuard, Ownable {
     uint8 private constant MAX_CORE_CUMULATIVE_POINTS = 35;
     uint8 private constant MIN_CORE_TRAIT_POINTS = 2;
     uint8 private constant MAX_CORE_TRAIT_POINTS = 10;
+    uint16 private constant GENESIS_MINT = 4000;
 
     mapping(address => uint8) private _minters;
 
@@ -45,7 +46,7 @@ contract Summoner is ReentrancyGuard, Ownable {
 
     uint256 public epochSize = 100;
 
-    uint256 public bondingFactor = 2 ether;
+    uint256 public bondingFactor = 1 ether;
 
     uint8 public perWalletLimit = 10;
 
@@ -96,6 +97,7 @@ contract Summoner is ReentrancyGuard, Ownable {
         payable
         nonReentrant
     {
+        require(_tokenIdCounter.current() < GENESIS_MINT, "Summoner: Genesis mint limit reached");
         if (msg.sender != owner()) {
             uint8 minted = _minters[msg.sender];
             require(msg.value >= price, "Summoner: insufficient funds");

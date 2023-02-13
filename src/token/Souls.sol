@@ -28,7 +28,7 @@ contract Souls is ISouls, ERC721, ERC721Enumerable, Pausable, AccessControl, ERC
 
     mapping(uint256 => Kokoro) private _souls;
 
-    constructor() ERC721("Souls", "SOUL") {
+    constructor() ERC721("Hero Souls", "SOUL") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
@@ -56,7 +56,7 @@ contract Souls is ISouls, ERC721, ERC721Enumerable, Pausable, AccessControl, ERC
         _revokeRole(MINTER_ROLE, _account);
     }
 
-    function summon(address _to, uint256 _tokenId, Kokoro memory _soul) external onlyRole(MINTER_ROLE) {
+    function summon(address _to, uint256 _tokenId, Kokoro calldata _soul) external onlyRole(MINTER_ROLE) {
         // We are not interfering with summoner logic here, but envorcing each core trait exists i.e. > 0
         if (
             _soul.agi == 0 || _soul.cha == 0 || _soul.con == 0 || _soul.dex == 0 || _soul.it == 0 || _soul.str == 0
@@ -73,7 +73,7 @@ contract Souls is ISouls, ERC721, ERC721Enumerable, Pausable, AccessControl, ERC
         return _souls[_tokenId];
     }
 
-    function _attributes(Kokoro memory s) internal pure returns (string memory) {
+    function _attributes(Kokoro storage s) internal view returns (string memory) {
         return string.concat(
             '[{"trait_type":"Generation","value":"',
             toString(s.gen),
@@ -119,7 +119,7 @@ contract Souls is ISouls, ERC721, ERC721Enumerable, Pausable, AccessControl, ERC
         );
     }
 
-    function _svgImage(Kokoro memory s) internal pure returns (string memory) {
+    function _svgImage(Kokoro storage s) internal view returns (string memory) {
         return string.concat(
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280"><defs>',
             '<style type="text/css">text {fill:#fe0039;font:bold 16px monospace;paint-order:stroke fill;stroke:rgba(254,0,57,0.3);stroke-width:2px;stroke-linejoin:round;}.t {fill:rgba(255,255,255,0.1)}.i {fill:#fe0039;}.s {fill:#fff}</style></defs>',
@@ -138,7 +138,7 @@ contract Souls is ISouls, ERC721, ERC721Enumerable, Pausable, AccessControl, ERC
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         _requireMinted(tokenId);
 
-        Kokoro memory _soul = _souls[tokenId];
+        Kokoro storage _soul = _souls[tokenId];
 
         string memory json = Base64.encode(
             bytes(

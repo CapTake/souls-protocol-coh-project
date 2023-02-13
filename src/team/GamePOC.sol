@@ -15,7 +15,8 @@ struct CharacterStats {
     uint16 parryH;
     uint16 dfm;
     uint16 atm;
-    uint8 up;
+    uint8 up; // upgrade points
+    uint8 upSpent; // how many upgrade points were spent
     uint64 money;
     uint64 xp;
     uint64 timestamp;
@@ -40,9 +41,37 @@ contract IdleHeroesGamePOC is SoulGame, Ownable {
             dfm: 0,
             atm: 0,
             up: 0,
+            upSpent: 0,
             money: 0,
             xp: 0,
             timestamp: uint64(block.timestamp)
         });
+    }
+
+    function levelUp(
+        uint256 _id,
+        uint8 _level, // user have to supply actual level everytime
+        uint8 _agiup,
+        uint8 _chaup,
+        uint8 _conup,
+        uint8 _dexup,
+        uint8 _itup,
+        uint8 _strup,
+        uint8 _wisup
+    ) external onlyNFTOwner(_id) {
+        CharacterStats storage hero = _heroes[_id];
+        // TODO: recalculate xp points regarding time spent on current quest
+        // maximum level is 255
+        if (hero.level < 255) {
+            uint64 levelxp = 256 * _level * _level;
+            uint64 nextlevelxp = 256 * (_level + 1) * (_level + 1);
+            require(hero.xp >= levelxp && hero.xp < nextlevelxp, "Invalid level");
+            hero.level = _level;
+            hero.up = _level >> 2; // upgrade point added every 4 levels
+        }
+        uint16 cumulative = _agiup + _chaup + _conup + _dexup + _itup + _strup + _wisup;
+        require(cumulative <= (hero.up - hero.upSpent), "Upgrade is out of range");
+        hero.upSpent += uint8(cumulative);
+        // hero
     }
 }

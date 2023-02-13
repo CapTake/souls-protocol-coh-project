@@ -11,6 +11,8 @@ import "../token/ISouls.sol";
  * This module is used through inheritance. It will make available the modifier
  * `onlyNFTOwner`, which can be applied to your functions to restrict their use to
  * the owner of Soul NFT. Use this as base for your on chain game;
+ * @notice Status is WIP, some things are going to be changed in the future,
+ * consider this not production ready yet.
  */
 abstract contract SoulGame is Context {
     ISouls private _limbo;
