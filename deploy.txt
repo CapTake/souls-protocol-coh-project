@@ -1,1 +1,5 @@
-forge create Splitter --rpc-url=$TESTNET_CANTO_RPC_URL --private-key=$TEST_PRIVATE_KEY --constructor-args [$TESTNET_ADDRESS1] [100]
+# To load the variables in the .env file
+source .env
+
+# To deploy and verify our contract
+forge script script/DeployAll.s.sol:DeployScript --rpc-url $TESTNET_CANTO_RPC_URL --broadcast --verify -vvvv
