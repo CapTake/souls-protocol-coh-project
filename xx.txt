@@ -1,2 +1,0 @@
-Compiling 31 files with 0.8.18
-Solc 0.8.18 finished in 258.67ms
