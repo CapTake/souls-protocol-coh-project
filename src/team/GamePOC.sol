@@ -22,6 +22,10 @@ struct CharacterStats {
     uint64 timestamp;
 }
 
+/**
+ * @dev This is work in progress, just started a POC game contract, as an example of how to use
+ * SoulGame contract as a foundation. Nothing is works yet, but I hope to make it some day soon.
+ */
 contract IdleHeroesGamePOC is SoulGame, Ownable {
     mapping(uint256 => CharacterStats) private _heroes;
 
