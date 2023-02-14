@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 import "forge-std/Test.sol";
 import {Kokoro, Souls, InvalidSummonData} from "src/token/Souls.sol";
 import "src/team/Summoner.sol";
-//import "forge-std/console.sol";
+import "src/team/Splitter.sol";
 
 contract SummonerTest is Test {
     Souls c;
@@ -20,6 +20,8 @@ contract SummonerTest is Test {
     uint256 internal epochSize = 5;
     uint8 internal perWallet = 10;
     uint16 internal totalSupply = 20;
+    uint256[] public shares = [100];
+    address[] public payees;
 
     function assertMintsEqual(Kokoro memory m1, Kokoro memory m2) internal {
         assertEq(m1.agi, m2.agi);
@@ -37,8 +39,9 @@ contract SummonerTest is Test {
         validMint = Kokoro(2, 3, 4, 5, 6, 5, 10, 0);
         alice = vm.addr(0xA11CE); // private key - returns address
         bob = vm.addr(0xB0B);
-        trevor = vm.addr(0x723);
-        c = new Souls();
+        payees.push(bob);
+        trevor = address(new Splitter(payees, shares)); //vm.addr(0x723);
+        c = new Souls(trevor);
         s = new Summoner(price, epochSize, bonding, perWallet, totalSupply, payable(trevor), c);
         c.addMinter(address(s));
     }
@@ -102,6 +105,7 @@ contract SummonerTest is Test {
         assertMintsEqual(minted, customMint);
         assertEq(c.balanceOf(alice), 3);
         assertEq(s.summoned(), 3);
+        assertEq(trevor.balance, price * 3);
     }
 
     function testChangeEpoch() public {
@@ -132,7 +136,6 @@ contract SummonerTest is Test {
         Kokoro memory customMint = Kokoro(2, 2, 2, 2, 2, 2, 2, 0);
         vm.deal(alice, price * perWallet * 2);
         vm.startPrank(alice);
-        uint256 prevEpoch = s.epoch();
         uint256 _price;
         for (uint256 i = 0; i < perWallet + 1; i++) {
             _price = s.price();

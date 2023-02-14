@@ -22,7 +22,7 @@ contract SoulsTest is Test {
     }
 
     function setUp() public {
-        c = new Souls();
+        c = new Souls(msg.sender);
         owner = msg.sender;
         validMint = Kokoro(2, 3, 4, 5, 6, 7, 8, 0);
         alice = vm.addr(0xA11CE); // private key - returns address

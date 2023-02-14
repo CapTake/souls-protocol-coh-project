@@ -8,8 +8,9 @@ pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+// import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 
@@ -22,30 +23,22 @@ interface Turnstile {
 error InvalidSummonData();
 error SoulNotExists();
 
-contract Souls is ISouls, ERC721, ERC721Enumerable, Pausable, AccessControl, ERC721Burnable {
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+contract Souls is ISouls, ERC721Enumerable, ERC721Royalty, AccessControl, ERC721Burnable {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     mapping(uint256 => Kokoro) private _souls;
 
-    constructor() ERC721("Hero Souls", "SOUL") {
+    constructor(address _royalty) ERC721("Hero Souls", "SOUL") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
+
+        _setDefaultRoyalty(_royalty, 500);
 
         // Canto Mainnet Only
         if (block.chainid == 7700) {
             Turnstile _turnstile = Turnstile(0xEcf044C5B4b867CFda001101c617eCd347095B44);
             _turnstile.register(msg.sender);
         }
-    }
-
-    function pause() public onlyRole(PAUSER_ROLE) {
-        _pause();
-    }
-
-    function unpause() public onlyRole(PAUSER_ROLE) {
-        _unpause();
     }
 
     function addMinter(address _account) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -183,15 +176,18 @@ contract Souls is ISouls, ERC721, ERC721Enumerable, Pausable, AccessControl, ERC
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
         internal
         override(ERC721, ERC721Enumerable)
-        whenNotPaused
     {
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
+    }
+
+    function _burn(uint256 tokenId) internal override(ERC721, ERC721Royalty) {
+        super._burn(tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(AccessControl, ERC721, ERC721Enumerable, IERC165)
+        override(AccessControl, ERC721, ERC721Enumerable, ERC721Royalty, IERC165)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
