@@ -139,7 +139,7 @@ contract Souls is ISouls, ERC721Enumerable, ERC721Royalty, AccessControl, ERC721
                     '{"name":"Hero Soul #',
                     toString(tokenId),
                     '",',
-                    '"description":"Souls of legendary heroes.","image":"data:image/svg+xml;base64,',
+                    '"description":"The Immutable Soul of you game character incarnation. Stored completely on chain. Forever.","image":"data:image/svg+xml;base64,',
                     Base64.encode(bytes(_svgImage(_soul))),
                     '",',
                     '"attributes":',
