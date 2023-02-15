@@ -9,6 +9,7 @@ import "src/team/Splitter.sol";
 contract SummonerTest is Test {
     Souls c;
     Summoner s;
+    Splitter t;
     Kokoro internal validMint;
     address internal owner;
     address internal alice;
@@ -40,7 +41,8 @@ contract SummonerTest is Test {
         alice = vm.addr(0xA11CE); // private key - returns address
         bob = vm.addr(0xB0B);
         payees.push(bob);
-        trevor = address(new Splitter(payees, shares)); //vm.addr(0x723);
+        t = new Splitter(payees, shares);
+        trevor = address(t);
         c = new Souls(trevor);
         s = new Summoner(price, epochSize, bonding, perWallet, totalSupply, payable(trevor), c);
         c.addMinter(address(s));
@@ -57,6 +59,9 @@ contract SummonerTest is Test {
         assertMintsEqual(minted, validMint);
         assertEq(c.balanceOf(alice), 1);
         assertEq(c.ownerOf(tokenId), alice);
+        uint256 bobOldBalance = bob.balance;
+        t.release(payable(bob));
+        assertEq(bob.balance, bobOldBalance + price);
     }
 
     function testSummonMultipleByAlice() public {
