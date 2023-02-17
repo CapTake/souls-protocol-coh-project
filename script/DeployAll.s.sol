@@ -32,7 +32,11 @@ contract DeployScript is Script {
 
         Souls nft = new Souls(address(treasury));
 
-        Summoner summoner = new Summoner(price, epochSize, bonding, perWallet, totalSupply, payable(treasury), nft);
+        Summoner summoner = new Summoner(epochSize, perWallet, totalSupply, payable(treasury), nft);
+
+        //        summoner.setPricing(price, bonding);
+
+        summoner.setPause(true);
 
         nft.addMinter(address(summoner));
 

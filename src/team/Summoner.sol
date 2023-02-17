@@ -36,6 +36,8 @@ contract Summoner is ReentrancyGuard, Ownable {
 
     mapping(address => uint8) private _minters;
 
+    bool private _paused;
+
     Counters.Counter private _tokenIdCounter;
 
     address payable public treasury;
@@ -66,24 +68,13 @@ contract Summoner is ReentrancyGuard, Ownable {
     event EpochChanged(uint256 epoch, uint256 price);
 
     /**
-     * @param _price price per summon
      * @param _epochSize size of the 'epoch' after each epoch there is a price increase by
-     * @param _bondingFactor amount of Canto to add to price
      * @param _perWalletLimit how many tokens can address mint
      * @param _mintLimit total supply of genesis mint
      * @param _treasury Address where collected funds will be forwarded to
      * @param _nft Address of the token being sold
      */
-    constructor(
-        uint256 _price,
-        uint256 _epochSize,
-        uint256 _bondingFactor,
-        uint8 _perWalletLimit,
-        uint16 _mintLimit,
-        address payable _treasury,
-        ISouls _nft
-    ) {
-        require(_price > 0, "Summoner: price is 0");
+    constructor(uint256 _epochSize, uint8 _perWalletLimit, uint16 _mintLimit, address payable _treasury, ISouls _nft) {
         require(_epochSize > 0, "Summoner: epoch is 0");
         require(_perWalletLimit > 0, "Summoner: perWalletLimit is 0");
         require(_mintLimit > _epochSize, "Summoner: mint limit is too low");
@@ -91,9 +82,6 @@ contract Summoner is ReentrancyGuard, Ownable {
         require(address(_nft) != address(0), "Summoner: token is the zero address");
 
         epoch = 0;
-
-        price = _price;
-        bondingFactor = _bondingFactor;
         epochSize = _epochSize;
         perWalletLimit = _perWalletLimit;
         _genesis_mint = _mintLimit;
@@ -103,6 +91,19 @@ contract Summoner is ReentrancyGuard, Ownable {
 
     function setTreasury(address payable _treasury) external onlyOwner {
         treasury = _treasury;
+    }
+
+    /**
+     * @param _price price per summon
+     * @param _bonding amount of Canto to add to price in the end of epoch
+     */
+    function setPricing(uint256 _price, uint256 _bonding) external onlyOwner {
+        price = _price;
+        bondingFactor = _bonding;
+    }
+
+    function setPause(bool _pause) external onlyOwner {
+        _paused = _pause;
     }
 
     function summoned() external view returns (uint256) {
@@ -118,6 +119,7 @@ contract Summoner is ReentrancyGuard, Ownable {
         payable
         nonReentrant
     {
+        require(_paused == false, "Summoner: contract is paused");
         require(_tokenIdCounter.current() < _genesis_mint, "Summoner: Genesis mint limit reached");
         if (msg.sender != owner()) {
             uint8 minted = _minters[msg.sender];

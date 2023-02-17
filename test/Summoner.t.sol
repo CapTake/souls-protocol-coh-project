@@ -16,8 +16,8 @@ contract SummonerTest is Test {
     address internal bob;
     address internal trevor;
 
-    uint256 internal price = 5 ether;
-    uint256 internal bonding = 2 ether;
+    uint256 internal price = 3 ether;
+    uint256 internal bonding = 1 ether;
     uint256 internal epochSize = 5;
     uint8 internal perWallet = 10;
     uint16 internal totalSupply = 20;
@@ -44,12 +44,16 @@ contract SummonerTest is Test {
         t = new Splitter(payees, shares);
         trevor = address(t);
         c = new Souls(trevor);
-        s = new Summoner(price, epochSize, bonding, perWallet, totalSupply, payable(trevor), c);
+        s = new Summoner(epochSize, perWallet, totalSupply, payable(trevor), c);
+        s.setPricing(price, bonding);
+        s.setPause(true);
+
         c.addMinter(address(s));
     }
 
     function testSummonByAlice() public {
         uint256 tokenId = 1;
+        s.setPause(false);
         vm.deal(alice, (price * 10));
         vm.prank(alice);
         s.summon{value: price}(
@@ -64,9 +68,18 @@ contract SummonerTest is Test {
         assertEq(bob.balance, bobOldBalance + price);
     }
 
+    function testFailSummonPausedByAlice() public {
+        vm.deal(alice, (price * 10));
+        vm.prank(alice);
+        s.summon{value: price}(
+            validMint.agi, validMint.cha, validMint.con, validMint.dex, validMint.it, validMint.str, validMint.wis
+        );
+    }
+
     function testSummonMultipleByAlice() public {
         Kokoro memory customMint = Kokoro(2, 2, 2, 2, 2, 2, 2, 0);
         Kokoro memory minted;
+        s.setPause(false);
         vm.deal(alice, (price * 10));
         vm.startPrank(alice);
         s.summon{value: price}(
@@ -115,6 +128,7 @@ contract SummonerTest is Test {
 
     function testChangeEpoch() public {
         Kokoro memory customMint = Kokoro(2, 2, 2, 2, 2, 2, 2, 0);
+        s.setPause(false);
         vm.deal(alice, (price * 10));
         vm.startPrank(alice);
         uint256 prevEpoch = s.epoch();
@@ -139,6 +153,7 @@ contract SummonerTest is Test {
 
     function testFailMintOverWalletLimit() public {
         Kokoro memory customMint = Kokoro(2, 2, 2, 2, 2, 2, 2, 0);
+        s.setPause(false);
         vm.deal(alice, price * perWallet * 2);
         vm.startPrank(alice);
         uint256 _price;
@@ -158,12 +173,14 @@ contract SummonerTest is Test {
     }
 
     function testFailInsufficientFunds() public {
+        s.setPause(false);
         vm.prank(alice);
         s.summon(validMint.agi, validMint.cha, validMint.con, validMint.dex, validMint.it, validMint.str, validMint.wis);
     }
 
     function testFailInvalidTraitValue() public {
         Kokoro memory customMint = Kokoro(2, 2, 2, 2, 2, 2, 11, 0);
+        s.setPause(false);
         vm.prank(alice);
         s.summon(
             customMint.agi,
@@ -178,6 +195,7 @@ contract SummonerTest is Test {
 
     function testFailInvalidCumulativeValue() public {
         Kokoro memory customMint = Kokoro(2, 2, 10, 10, 10, 2, 10, 0);
+        s.setPause(false);
         vm.prank(alice);
         s.summon(
             customMint.agi,
