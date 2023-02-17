@@ -80,11 +80,11 @@ abstract contract SoulGame is Context {
     function _reset(uint256 _soulId) private {
         Kokoro memory soul = _limbo.soul(_soulId);
 
-        _beforeIncarnate(soul);
+        _beforeIncarnate(_soulId, soul);
 
         _existence[_soulId] = soul;
 
-        _afterIncarnate(_soulId, soul);
+        _afterIncarnate(_soulId, _existence[_soulId]);
 
         emit SoulReIncarnated(_msgSender(), _soulId);
     }
@@ -195,7 +195,7 @@ abstract contract SoulGame is Context {
      * various traits fitness for the game checks. Revert if needed.
      * @param _soul Kokoro struct with the core traits.
      */
-    function _beforeIncarnate(Kokoro memory _soul) internal virtual {}
+    function _beforeIncarnate(uint256 _soulId, Kokoro memory _soul) internal virtual {}
 
     /**
      * @dev Hook that is called before Soul incarnation in game. Use it to set things up when
@@ -203,7 +203,7 @@ abstract contract SoulGame is Context {
      * @param _soulId The ID of the Soul NFT.
      * @param _soul Kokoro struct with the core traits.
      */
-    function _afterIncarnate(uint256 _soulId, Kokoro memory _soul) internal virtual {}
+    function _afterIncarnate(uint256 _soulId, Kokoro storage _soul) internal virtual {}
 
     /**
      * @dev This is where player joins the game. Copies core traits of Soul NFT in game contract

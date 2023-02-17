@@ -4,7 +4,7 @@ pragma solidity ^0.8.16;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../game/SoulGame.sol";
 
-struct CharacterStats {
+struct HeroState {
     uint8 level;
     uint16 hp;
     uint16 mp;
@@ -15,10 +15,11 @@ struct CharacterStats {
     uint16 parryH;
     uint16 dfm;
     uint16 atm;
-    uint8 up; // upgrade points
-    uint8 upSpent; // how many upgrade points were spent
+    uint16 up; // upgrade points
+    uint16 upSpent; // how many upgrade points were spent
     uint64 money;
     uint64 xp;
+    Kokoro core;
     uint64 timestamp;
 }
 
@@ -27,13 +28,15 @@ struct CharacterStats {
  * SoulGame contract as a foundation. Nothing is works yet, but I hope to make it some day soon.
  */
 contract IdleHeroesGamePOC is SoulGame, Ownable {
-    mapping(uint256 => CharacterStats) private _heroes;
+    mapping(uint256 => HeroState) private _heroes;
+
+    event HeroProgressed(uint256 indexed soulId, Kokoro coreTraits);
 
     constructor(ISouls _souls) SoulGame(_souls) {}
 
-    function _afterIncarnate(uint256 _soulId, Kokoro memory _soul) internal override {
+    function _afterIncarnate(uint256 _soulId, Kokoro storage _soul) internal override {
         uint8 athletics = _soul.agi + _soul.con;
-        _heroes[_soulId] = CharacterStats({
+        _heroes[_soulId] = HeroState({
             level: 1,
             hp: _soul.con * 2,
             mp: _soul.it * _soul.wis,
@@ -48,6 +51,7 @@ contract IdleHeroesGamePOC is SoulGame, Ownable {
             upSpent: 0,
             money: 0,
             xp: 0,
+            core: _soul,
             timestamp: uint64(block.timestamp)
         });
     }
@@ -63,19 +67,30 @@ contract IdleHeroesGamePOC is SoulGame, Ownable {
         uint8 _strup,
         uint8 _wisup
     ) external onlyNFTOwner(_id) {
-        CharacterStats storage hero = _heroes[_id];
+        // no point in limiting access to owner here, just needed an example
+        HeroState storage hero = _heroes[_id];
         // TODO: recalculate xp points regarding time spent on current quest
         // maximum level is 255
         if (hero.level < 255) {
             uint64 levelxp = 256 * _level * _level;
+
             uint64 nextlevelxp = 256 * (_level + 1) * (_level + 1);
+
             require(hero.xp >= levelxp && hero.xp < nextlevelxp, "Invalid level");
+
             hero.level = _level;
+
             hero.up = _level >> 2; // upgrade point added every 4 levels
         }
-        uint16 cumulative = _agiup + _chaup + _conup + _dexup + _itup + _strup + _wisup;
-        require(cumulative <= (hero.up - hero.upSpent), "Upgrade is out of range");
-        hero.upSpent += uint8(cumulative);
-        // TODO: coplete method logics
+        hero.upSpent += (_agiup + _chaup + _conup + _dexup + _itup + _strup + _wisup);
+        require(hero.up >= hero.upSpent, "Upgrade is out of range");
+        hero.core.agi += _agiup;
+        hero.core.cha += _chaup;
+        hero.core.con += _conup;
+        hero.core.dex += _dexup;
+        hero.core.it += _itup;
+        hero.core.str += _strup;
+        hero.core.wis += _wisup;
+        emit HeroProgressed(_id, hero.core);
     }
 }
